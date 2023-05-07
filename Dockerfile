@@ -26,6 +26,8 @@ RUN conda init bash \
     && conda update conda \
     && conda create -n "py${PYTHON_VERSION}" python="${PYTHON_VERSION}" \
     && echo "source activate py${PYTHON_VERSION}" > ~/.bashrc
+    
+ENV PATH="/root/miniconda3/envs/py${PYTHON_VERSION}/bin:${PATH}"
 
 WORKDIR /workspace
 
