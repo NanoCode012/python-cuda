@@ -9,9 +9,6 @@ ENV PATH="/root/miniconda3/bin:${PATH}"
 ARG PYTHON_VERSION="3.9"
 ENV PYTHON_VERSION=$PYTHON_VERSION
 
-# Enables "source activate conda"
-SHELL ["/bin/bash", "-c"]
-
 RUN apt-get update
 RUN apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 
@@ -22,10 +19,9 @@ RUN wget \
     && rm -f Miniconda3-latest-Linux-x86_64.sh
 
 RUN conda init bash \
-    && source /root/.bashrc \
+    && . /root/.bashrc \
     && conda update conda \
-    && conda create -n "py${PYTHON_VERSION}" python="${PYTHON_VERSION}" \
-    && echo "source activate py${PYTHON_VERSION}" > ~/.bashrc
+    && conda create -n "py${PYTHON_VERSION}" python="${PYTHON_VERSION}"
     
 ENV PATH="/root/miniconda3/envs/py${PYTHON_VERSION}/bin:${PATH}"
 
