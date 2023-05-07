@@ -18,10 +18,7 @@ RUN wget \
     && bash Miniconda3-latest-Linux-x86_64.sh -b \
     && rm -f Miniconda3-latest-Linux-x86_64.sh
 
-RUN conda init bash \
-    && . /root/.bashrc \
-    && conda update conda \
-    && conda create -n "py${PYTHON_VERSION}" python="${PYTHON_VERSION}"
+RUN conda create -n "py${PYTHON_VERSION}" python="${PYTHON_VERSION}"
     
 ENV PATH="/root/miniconda3/envs/py${PYTHON_VERSION}/bin:${PATH}"
 
