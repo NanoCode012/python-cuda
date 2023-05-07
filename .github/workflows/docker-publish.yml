@@ -15,12 +15,18 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: docker.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: nanobits/python-cuda
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/python-cuda
 
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.9]
+        cuda: [11.8.0]
+        cudnn: [8]
+        ubuntu: [22.04]
     permissions:
       contents: read
       packages: write
@@ -57,11 +63,11 @@ jobs:
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
-#       - name: Extract Docker metadata
-#         id: meta
-#         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-#         with:
-#           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -71,10 +77,15 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: latest #${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:py${{ matrix.python }}-cuda${{ matrix.cuda }}-cudnn${{ matrix.cudnn }}-ubuntu${{ matrix.ubuntu }} #${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python }}
+            CUDA_VERSION=${{ matrix.cuda }}
+            CUDNN_VERSION=${{ matrix.cudnn }}
+            UBUNTU_VERSION=${{ matrix.ubuntu }}
 
 
       # Sign the resulting Docker image digest except on PRs.
@@ -88,4 +99,4 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
-        run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+        run: echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:py${{ matrix.python }}-cuda${{ matrix.cuda }}-cudnn${{ matrix.cudnn }}-ubuntu${{ matrix.ubuntu }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
